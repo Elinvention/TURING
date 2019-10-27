@@ -1,6 +1,7 @@
 package protocol.request;
 
 import exceptions.DuplicateDocumentException;
+import exceptions.InvalidSessionException;
 import exceptions.NotAllowedException;
 import protocol.response.AckResponse;
 import protocol.response.ExceptionResponse;
@@ -12,10 +13,12 @@ import java.net.Socket;
 
 
 public class CreateDocumentRequest extends Request {
+    public final long sessionID;
     private final String document_name;
     private final int sections;
 
-    public CreateDocumentRequest(String document_name, int sections) {
+    public CreateDocumentRequest(long sessionID, String document_name, int sections) {
+        this.sessionID = sessionID;
         this.document_name = document_name;
         this.sections = sections;
     }
@@ -23,12 +26,12 @@ public class CreateDocumentRequest extends Request {
     @Override
     public Response process(Socket client) {
         try {
-            User owner = State.getInstance().getLoggedInUser(client);
+            User owner = State.getInstance().getUserFromSession(this.sessionID);
             owner.createDocument(this.document_name, this.sections);
-        } catch (NotAllowedException | DuplicateDocumentException e) {
+            return new AckResponse(this);
+        } catch (DuplicateDocumentException | InvalidSessionException e) {
             return new ExceptionResponse(e);
         }
-        return new AckResponse(this);
     }
 
     @Override

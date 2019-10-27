@@ -16,7 +16,7 @@ public class DocumentSection implements Serializable {
     private User currentEditor;
     private DocumentUri uri;
 
-    private DocumentSection(DocumentUri uri) {
+    public DocumentSection(DocumentUri uri) {
         if (uri.section == null)
             throw new IllegalArgumentException();
         this.uri = uri;
@@ -68,7 +68,7 @@ public class DocumentSection implements Serializable {
     }
 
     public void save() {
-        Path path = uri.getPath();
+        Path path = this.uri.getPath();
         try {
             Files.createDirectories(path.getParent());
         } catch (IOException e) {

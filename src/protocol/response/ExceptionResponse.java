@@ -9,6 +9,6 @@ public class ExceptionResponse extends Response {
 
     @Override
     public String toString() {
-        return "Server exception: " + ex.toString();
+        return "Server error: " + ex.toString();
     }
 }

@@ -46,7 +46,7 @@ public class Server {
 
             while (true) {
                 Socket client = server.accept();
-                System.out.println("New Client from " + client.getRemoteSocketAddress().toString());
+                System.out.println("Client connected " + client.getRemoteSocketAddress().toString());
                 ClientHandler handler = new ClientHandler(client);
                 es.execute(handler);
             }

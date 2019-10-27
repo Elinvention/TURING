@@ -4,7 +4,7 @@ import protocol.request.Request;
 
 public class AckResponse extends Response {
 
-    private final Request reqAck;
+    public final Request reqAck;
 
     public AckResponse(Request reqAck) {
         this.reqAck = reqAck;

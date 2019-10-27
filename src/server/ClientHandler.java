@@ -7,6 +7,7 @@ import protocol.response.Response;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.net.Socket;
 
 
@@ -28,12 +29,10 @@ public class ClientHandler implements Runnable {
 
     private void clientDisconnect() {
         try {
-            System.out.println("Client from " + client.getRemoteSocketAddress().toString() + " disconnected.");
+            System.out.println("Client disconnected " + client.getRemoteSocketAddress().toString());
             client.close();
         } catch (IOException ex) {
             ex.printStackTrace();
-        } finally {
-            State.getInstance().clientDisconnected(client);
         }
     }
 
@@ -50,8 +49,8 @@ public class ClientHandler implements Runnable {
                     System.out.println(request.getClass().getSimpleName() + " received: " + request.toString());
                     Response response = request.process(client);
                     response.send(client);
-                    State.getInstance().processInvites();
-                } catch (ClassNotFoundException e) {
+                    State.getInstance().processInvites(client);
+                } catch (ClassNotFoundException | InvalidClassException e) {
                     System.err.println("Dropping unknown packet received from " + client.getRemoteSocketAddress().toString() + ".");
                     trySendExceptionResponse(e);
                 }

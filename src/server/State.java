@@ -4,18 +4,21 @@ import exceptions.*;
 import protocol.DocumentUri;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
-public class State implements Serializable {
+public class State {
     private static State singleton;
+    private static SecureRandom csrng = new SecureRandom();
 
-    private Map<String, User> users = new HashMap<>();
-    private transient Map<Socket, User> logins = new HashMap<>();
+    private final Map<String, User> users = new HashMap<>();
+    private final Map<Long, User> activeLoginSessions = new HashMap<>();
 
     private State() {
 
@@ -28,13 +31,15 @@ public class State implements Serializable {
     }
 
     private static State load() {
-        State state = new State();
+        singleton = new State();
         Path path = Paths.get(PermanentStorage.BASE_FOLDER);
         try {
+            if (Files.notExists(path))
+                Files.createDirectories(path);
             Files.list(path).forEach(userFolder -> {
                 try {
                     User user = User.load(userFolder);
-                    state.users.put(user.getName(), user);
+                    singleton.users.put(user.getName(), user);
                 } catch (IOException | InvalidUsernameException | InvalidPasswordException e) {
                     e.printStackTrace();
                 }
@@ -42,7 +47,11 @@ public class State implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return state;
+        // Collaborators can be loaded only after all users have been loaded
+        for (User u : singleton.users.values())
+            for (Document d : u.getOwnedDocuments())
+                d.loadCollaborators();
+        return singleton;
     }
 
     public User getUser(String username) throws InvalidUsernameException {
@@ -65,13 +74,13 @@ public class State implements Serializable {
         return doc.getSection(uri.section);
     }
 
-    public User getLoggedInUser(Socket client) throws NotAllowedException {
-        if (!logins.containsKey(client))
-            throw new NotAllowedException();
-        return logins.get(client);
+    public User getUserFromSession(Long sessionID) throws InvalidSessionException {
+        if (!activeLoginSessions.containsKey(sessionID))
+            throw new InvalidSessionException("Session " + sessionID + " is not a valid session. Please login again.");
+        return activeLoginSessions.get(sessionID);
     }
 
-    public void registerUser(String username, String password) throws DuplicateUsernameException, InvalidPasswordException, InvalidUsernameException {
+    public void registerUser(String username, String password) throws DuplicateUsernameException, InvalidPasswordException, InvalidUsernameException, InvalidKeySpecException, NoSuchAlgorithmException {
         User new_user = User.registerUser(username, password);
         if (users.containsKey(username)) {
             System.err.println("User " + new_user.toString() + " already exists.");
@@ -81,31 +90,31 @@ public class State implements Serializable {
         System.out.println("New " + new_user.toString() + " registered.");
     }
 
-    public void login(Socket client, User user, String password) throws InvalidRequestException, InvalidPasswordException {
+    private static Long generateSessionID() {
+        return csrng.nextLong();
+    }
+
+    public Long login(Socket client, User user, String password) throws InvalidRequestException, InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
         user.login(password, client);
-        logins.put(client, user);
+        Long sessionID = generateSessionID();
+        synchronized (this.activeLoginSessions) {
+            this.activeLoginSessions.put(sessionID, user);
+        }
+        return sessionID;
     }
 
-    public void logout(Socket client) throws InvalidRequestException {
-        User loggedIn = logins.get(client);
-        if (loggedIn == null)
-            throw new InvalidRequestException();
-        loggedIn.logout();
-        logins.remove(client);
-    }
-
-    void clientDisconnected(Socket client) {
-        User loggedIn = logins.get(client);
-        if (loggedIn != null) {
-            loggedIn.clientDisconnected();
-            logins.remove(client);
+    public void logout(Long sessionID) throws InvalidRequestException {
+        synchronized (this.activeLoginSessions) {
+            User loggedIn = this.activeLoginSessions.get(sessionID);
+            if (loggedIn == null)
+                throw new InvalidRequestException();
+            activeLoginSessions.remove(sessionID);
         }
     }
 
-    public void processInvites() {
-        for (User user : logins.values()) {
-            user.processInbox();
+    public void processInvites(Socket client) {
+        for (User user : this.activeLoginSessions.values()) {
+            user.processInbox(client);
         }
     }
-
 }

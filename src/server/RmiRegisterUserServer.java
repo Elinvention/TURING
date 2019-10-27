@@ -7,6 +7,8 @@ import exceptions.InvalidUsernameException;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class RmiRegisterUserServer extends UnicastRemoteObject implements RmiRegisterUser {
 
@@ -18,7 +20,7 @@ public class RmiRegisterUserServer extends UnicastRemoteObject implements RmiReg
     }
 
     @Override
-    public void registerUser(String username, String password) throws InvalidUsernameException, InvalidPasswordException, DuplicateUsernameException {
+    public void registerUser(String username, String password) throws InvalidUsernameException, InvalidPasswordException, DuplicateUsernameException, InvalidKeySpecException, NoSuchAlgorithmException {
         this.state.registerUser(username, password);
     }
 

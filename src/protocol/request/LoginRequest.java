@@ -10,6 +10,8 @@ import server.State;
 import server.User;
 
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 
 public class LoginRequest extends Request {
@@ -29,10 +31,10 @@ public class LoginRequest extends Request {
     public Response process(Socket client) {
         try {
             User user = State.getInstance().getUser(this.username);
-            State.getInstance().login(client, user, password);
-        } catch (InvalidUsernameException | InvalidPasswordException | InvalidRequestException e) {
+            Long sessionID = State.getInstance().login(client, user, password);
+            return new LoginResponse(username, sessionID);
+        } catch (InvalidUsernameException | InvalidPasswordException | InvalidRequestException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             return new ExceptionResponse(e);
         }
-        return new LoginResponse(username);
     }
 }

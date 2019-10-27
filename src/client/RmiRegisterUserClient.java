@@ -10,6 +10,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class RmiRegisterUserClient {
     public static void registerUser(String username, String password) {
@@ -24,7 +26,7 @@ public class RmiRegisterUserClient {
             System.err.println("Invalid username '" + username + "'.");
         } catch (InvalidPasswordException e) {
             System.err.println("Invalid password '" + password + "'.");
-        } catch (RemoteException | NotBoundException e) {
+        } catch (RemoteException | NotBoundException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
