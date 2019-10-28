@@ -67,6 +67,9 @@ public class Document implements Serializable {
                     .map(c -> State.getInstance().getUserOrNull(c))
                     .collect(Collectors.toSet());
             System.out.println(this.uri + " can be accessed by " + this.collaborators);
+            for (User collaborator : collaborators) {
+                collaborator.queueInvite(new Invite(this, collaborator));
+            }
         } catch (NoSuchFileException e) {
             try {
                 Files.createFile(collaboratorsPath);
