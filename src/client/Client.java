@@ -250,12 +250,11 @@ public class Client {
                 + "login < username > < password > effettua il login\n"
                 + "logout effettua il logout\n"
                 + "create < doc > < numsezioni > crea un documento\n"
-                + "share < doc > < username > condivide il documento\n"
-                + "show < doc > <sec > mostra una sezione del documento\n"
-                + "show < doc > mostra l'intero documento\n"
-                + "list mostra la lista dei documenti\n"
-                + "edit < doc > <sec > modifica una sezione del documento\n"
-                + "end - edit <doc > <sec > fine modifica della sezione del documento\n"
+                + "share < URI > < username > condivide il documento\n"
+                + "show < URI > mostra l'intero documento o una sezione\n"
+                + "list - mostra la lista dei documenti\n"
+                + "edit < URI > modifica una sezione del documento\n"
+                + "end-edit < URI > < testo > fine modifica della sezione del documento\n"
                 + "send < msg > invia un msg sulla chat\n"
                 + "receive visualizza i msg ricevuti sulla chat\n"
         );
@@ -270,6 +269,8 @@ public class Client {
                     c.logout();
                 } else if (args[0].equals("receive")) {
                     c.receiveChatMessages();
+                } else if (args[0].equals("list")) {
+                    c.listDocuments();
                 } else {
                     showUsage();
                     System.exit(-1);
@@ -302,7 +303,7 @@ public class Client {
                     c.createDocument(args[1], Integer.parseInt(args[2]));
                 } else if (args[0].equals("share")) {
                     c.inviteCollaborator(args[1], args[2]);
-                } else if (args[0].equals("end")) {
+                } else if (args[0].equals("end-edit")) {
                     c.endEditDocument(DocumentUri.parse(args[1]), args[2]);
                 } else {
                     showUsage();

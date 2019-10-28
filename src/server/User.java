@@ -128,7 +128,7 @@ public class User implements Serializable {
     }
 
     public String toString() {
-        return String.format("User \"%s\" with password \"%s\"", this.name, this.hashedPassword);
+        return String.format("User \"%s\": %d documents owned, %d collaborations.", this.name, this.documents.size(), this.collaboratingOn.size());
     }
 
     public String getName() {
