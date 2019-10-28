@@ -15,6 +15,8 @@ import java.security.spec.InvalidKeySpecException;
 
 
 public class LoginRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     private final String username;
     private final String password;
 

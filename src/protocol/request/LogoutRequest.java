@@ -11,6 +11,8 @@ import java.net.Socket;
 
 
 public class LogoutRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     private final long sessionID;
 
     public LogoutRequest(long sessionID) {

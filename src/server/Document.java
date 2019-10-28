@@ -18,9 +18,9 @@ public class Document implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public final DocumentUri uri;
-    private final User owner;
+    public final User owner;
     private Set<User> collaborators;
-    private DocumentSection sections[];
+    private DocumentSection[] sections;
     private transient InetAddress chatAddress;
     private transient int lockedSectionsCounter = 0;
 
@@ -37,7 +37,11 @@ public class Document implements Serializable {
         Document newDoc = new Document(uri, owner, sections);
         for (int i = 0; i < newDoc.sections.length; i++) {
             newDoc.sections[i] = new DocumentSection(uri.withSection(i));
-            newDoc.sections[i].save();
+            try {
+                newDoc.sections[i].save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return newDoc;
     }
@@ -50,7 +54,13 @@ public class Document implements Serializable {
         return newDoc;
     }
 
-    public void loadCollaborators() {
+    public synchronized void save() throws IOException {
+        for (DocumentSection section : this.sections) {
+            section.save();
+        }
+    }
+
+    public synchronized void loadCollaborators() {
         Path collaboratorsPath = this.uri.getPath().resolve("collaborators.txt");
         try {
             this.collaborators = Files.readAllLines(collaboratorsPath, StandardCharsets.UTF_8).stream()
@@ -68,7 +78,7 @@ public class Document implements Serializable {
         }
     }
 
-    public DocumentSection getSection(int section) throws DocumentSectionNotFoundException {
+    public synchronized DocumentSection getSection(int section) throws DocumentSectionNotFoundException {
         try {
             return sections[section];
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -76,7 +86,7 @@ public class Document implements Serializable {
         }
     }
 
-    public String getFullText() {
+    public synchronized String getFullText() {
         StringBuilder sb = new StringBuilder();
         for (DocumentSection s : sections) {
             sb.append(s.getText());
@@ -96,17 +106,13 @@ public class Document implements Serializable {
         return this.owner;
     }
 
-    public String getOwnerName() {
-        return this.uri.owner;
-    }
-
-    public boolean isAllowed(User requester) {
+    public synchronized boolean isAllowed(User requester) {
         if (requester == this.owner)
             return true;
         return collaborators.contains(requester);
     }
 
-    public void inviteCollaborator(User collaborator) {
+    public synchronized void inviteCollaborator(User collaborator) {
         this.collaborators.add(collaborator);
         Path collaboratorsPath = uri.getPath().resolve("collaborators.txt");
         Iterable<String> collaborators = this.collaborators.stream().map(c -> c.getName()).collect(Collectors.toList());
@@ -118,24 +124,25 @@ public class Document implements Serializable {
         collaborator.queueInvite(new Invite(this, collaborator));
     }
 
-    public DocumentSection lockSection(User editor, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException, UserAlreadyEditingException {
+    public synchronized DocumentSection lockSection(User editor, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException, UserAlreadyEditingException {
         if (editor.isEditing())
-            throw new UserAlreadyEditingException("User " + editor.getName() + " is already editing " + editor.editing.getUri());
+            throw new UserAlreadyEditingException("User " + editor.getName() + " is already editing " + editor.editing);
         DocumentSection documentSection = this.getSection(section);
         documentSection.setCurrentEditor(editor);
-        this.owner.editing = documentSection;
+        this.owner.editing = documentSection.getUri();
         this.lockedSectionsCounter++;
         return documentSection;
     }
 
-    public InetAddress getChatAddress() {
+    public synchronized InetAddress getChatAddress() {
         if (this.chatAddress != null)
             return this.chatAddress;
         this.chatAddress = ChatRoomAdressesManager.getInstance().openChatRoom();
         return this.chatAddress;
     }
 
-    public void unlockSection(User editor, String editedText, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException, DocumentSectionNotLockedException, InvalidRequestException {
+    public synchronized void unlockSection(User editor, String editedText, int section) throws DocumentSectionNotFoundException,
+            DocumentSectionLockedException, DocumentSectionNotLockedException, IOException {
         DocumentSection documentSection = this.getSection(section);
         documentSection.setText(editor, editedText);
         documentSection.setCurrentEditor(null);
@@ -146,5 +153,9 @@ public class Document implements Serializable {
             ChatRoomAdressesManager.getInstance().closeChatRoom(this.chatAddress);
             this.chatAddress = null;
         }
+    }
+
+    public DocumentInfo getInfo() {
+        return new DocumentInfo(this.uri, this.collaborators.stream().map(User::getName).collect(Collectors.toSet()));
     }
 }

@@ -21,12 +21,12 @@ import java.util.stream.Stream;
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String name;
-    private String hashedPassword;
+    public final String name;
+    public final String hashedPassword;
+    public DocumentUri editing;
     private transient Map<String, Document> documents;
     private transient Set<Document> collaboratingOn;
     private transient Queue<Invite> inviteInbox;
-    public DocumentSection editing;
 
     public User(String name, String hashedPassword) throws InvalidUsernameException, InvalidPasswordException {
         if (name == null || hashedPassword == null) {
@@ -135,13 +135,13 @@ public class User implements Serializable {
         return this.name;
     }
 
-    public List<Document> getOwnedDocuments() {
+    public synchronized List<Document> getOwnedDocuments() {
         return new ArrayList<>(this.documents.values());
     }
 
-    public List<DocumentUri> listDocumentUris() {
+    public synchronized List<DocumentInfo> listDocumentInfos() {
         Stream<Document> allDocuments = Stream.concat(this.documents.values().stream(), this.collaboratingOn.stream());
-        return allDocuments.map(d -> d.uri).collect(Collectors.toList());
+        return allDocuments.map(doc -> doc.getInfo()).collect(Collectors.toList());
     }
 
     public void login(String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
@@ -165,7 +165,7 @@ public class User implements Serializable {
         this.collaboratingOn.add(invite.document);
     }
 
-    public Document createDocument(String docName, int sections) throws DuplicateDocumentException {
+    public synchronized Document createDocument(String docName, int sections) throws DuplicateDocumentException {
         if (documents.containsKey(docName)) {
             throw new DuplicateDocumentException();
         }
@@ -174,7 +174,7 @@ public class User implements Serializable {
         return doc;
     }
 
-    public Document getDocument(User requester, String name) throws DocumentNotFoundException, NotAllowedException {
+    public synchronized Document getDocument(User requester, String name) throws DocumentNotFoundException, NotAllowedException {
         if (!documents.containsKey(name))
             throw new DocumentNotFoundException();
         Document doc = documents.get(name);
@@ -183,7 +183,7 @@ public class User implements Serializable {
         return doc;
     }
 
-    public boolean isEditing() {
+    public synchronized boolean isEditing() {
         return this.editing != null;
     }
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 public class Server {
     public static final int PORT = 2000;
     public static final int RMI_PORT = 3000;
-    public static final int NTHREADS = 4;
+    public static final int NTHREADS = 16;
 
     private static State state = State.getInstance();
     private static ExecutorService es = Executors.newFixedThreadPool(NTHREADS);

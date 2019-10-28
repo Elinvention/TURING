@@ -16,12 +16,12 @@ import java.util.Scanner;
 
 
 public class Client {
+    private InetAddress remoteAddress;
     private Socket socket = new Socket();
     private InetAddress multicastGroup;
     private Long sessionID;
 
     public Client() {
-        InetAddress remoteAddress = null;
         try {
             remoteAddress = InetAddress.getLocalHost();
             String address = Files.readString(Paths.get("address.txt")).strip();
@@ -46,7 +46,7 @@ public class Client {
                 e.printStackTrace();
             }
         } else {
-            try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(".turing.sessionID"));) {
+            try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(".turing.sessionID"))) {
                 dos.writeLong(this.sessionID);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -84,36 +84,47 @@ public class Client {
         }
     }
 
+    public void setSessionID(Long sessionID) {
+        this.sessionID = sessionID;
+        this.saveSessionID();
+    }
+
+    public Long getSessionID() {
+        this.loadSessionID();
+        return sessionID;
+    }
+
+    public void setMulticastGroup(InetAddress multicastGroup) {
+        this.multicastGroup = multicastGroup;
+        this.saveMulticastGroup();
+    }
+
+    public InetAddress getMulticastGroup() {
+        this.loadMulticastGroup();
+        return multicastGroup;
+    }
+
     public void login(String username, String password) throws IOException, ClassNotFoundException {
         this.loadSessionID();
-        if (this.sessionID != null)
+        if (this.sessionID != null) {
+            System.err.println("Eseguo logout dalla sessione aperta precedentemente.");
             this.logout();
-        LoginRequest req = new LoginRequest(username, password);
-        System.out.println(req.toString());
-        req.send(socket);
-        Response response = receiveResponse();
-        if (response instanceof LoginResponse) {
-            this.sessionID = ((LoginResponse) response).sessionID;
-            this.saveSessionID();
         }
+        LoginRequest req = new LoginRequest(username, password);
+        req.send(socket);
+        receiveResponse();
     }
 
     public void logout() throws IOException, ClassNotFoundException {
         this.loadSessionID();
         LogoutRequest req = new LogoutRequest(this.sessionID);
-        System.out.println(req.toString());
         req.send(socket);
-        Response response = receiveResponse();
-        if (response instanceof AckResponse) {
-            this.sessionID = null;
-            this.saveSessionID();
-        }
+        receiveResponse();
     }
 
     public void createDocument(String docName, int sections) throws IOException, ClassNotFoundException {
         this.loadSessionID();
         CreateDocumentRequest req = new CreateDocumentRequest(sessionID, docName, sections);
-        System.out.println(req.toString());
         req.send(socket);
         receiveResponse();
     }
@@ -121,7 +132,6 @@ public class Client {
     public void showDocument(DocumentUri uri) throws IOException, ClassNotFoundException {
         this.loadSessionID();
         ShowDocumentRequest req = new ShowDocumentRequest(sessionID, uri);
-        System.out.println(req.toString());
         req.send(socket);
         receiveResponse();
     }
@@ -129,7 +139,6 @@ public class Client {
     public void showDocumentSection(DocumentUri uri) throws IOException, ClassNotFoundException {
         this.loadSessionID();
         ShowDocumentSectionRequest req = new ShowDocumentSectionRequest(sessionID, uri);
-        System.out.println(req.toString());
         req.send(socket);
         receiveResponse();
     }
@@ -137,19 +146,14 @@ public class Client {
     public void editDocument(DocumentUri uri) throws IOException, ClassNotFoundException {
         this.loadSessionID();
         EditRequest req = new EditRequest(sessionID, uri);
-        System.out.println(req.toString());
         req.send(socket);
-        Response response = receiveResponse();
-        if (response instanceof EditResponse) {
-            ((EditResponse) response).section.save();
-        }
+        receiveResponse();
     }
 
     public void endEditDocument(DocumentUri uri) throws IOException, ClassNotFoundException {
         this.loadSessionID();
         String editedText = DocumentSection.load(uri).getText();
         EndEditRequest req = new EndEditRequest(sessionID, uri, editedText);
-        System.out.println(req.toString());
         req.send(socket);
         receiveResponse();
     }
@@ -157,7 +161,6 @@ public class Client {
     public void inviteCollaborator(String docName, String username) throws IOException, ClassNotFoundException {
         this.loadSessionID();
         InviteCollaboratorRequest req = new InviteCollaboratorRequest(sessionID, docName, username);
-        System.out.println(req.toString());
         req.send(socket);
         receiveResponse();
     }
@@ -165,7 +168,6 @@ public class Client {
     public void listDocuments() throws IOException, ClassNotFoundException {
         this.loadSessionID();
         ListDocumentsRequest req = new ListDocumentsRequest(sessionID);
-        System.out.println(req.toString());
         req.send(socket);
         receiveResponse();
     }
@@ -200,7 +202,7 @@ public class Client {
             System.err.println("You are not editing any document.");
             return;
         }
-        try (MulticastSocket client = new MulticastSocket(ChatRoomAdressesManager.PORT);) {
+        try (MulticastSocket client = new MulticastSocket(ChatRoomAdressesManager.PORT)) {
             client.joinGroup(this.multicastGroup);
             DatagramPacket packet = new DatagramPacket(new byte[512], 512);
             while(true) {
@@ -219,23 +221,11 @@ public class Client {
     public Response receiveResponse() throws IOException, ClassNotFoundException {
         Response response = (Response) Message.receive(socket);
         while (response instanceof InviteNotification) {
-            System.out.println("Received " + response);
+            response.process(this);
             response = (Response) Message.receive(socket);
         }
-        if (response instanceof EditResponse) {
-            this.multicastGroup = ((EditResponse) response).chatAddress;
-            this.saveMulticastGroup();
-        }
-        printResponse(response);
+        response.process(this);
         return response;
-    }
-
-    public static void printResponse(Response response) {
-        if (response instanceof ExceptionResponse) {
-            System.err.println(response.toString());
-        } else {
-            System.out.println(response.toString());
-        }
     }
 
     public void close() {
@@ -251,17 +241,19 @@ public class Client {
                 "turing -- help\n"
                 + "usage: turing COMMAND [ ARGS ...]\n"
                 + "commands:\n"
-                + "register < username > < password > registra l'utente\n"
-                + "login < username > < password > effettua il login\n"
-                + "logout effettua il logout\n"
-                + "create < doc > < numsezioni > crea un documento\n"
-                + "share < URI > < username > condivide il documento\n"
-                + "show < URI > mostra l'intero documento o una sezione\n"
-                + "list - mostra la lista dei documenti\n"
-                + "edit < URI > modifica una sezione del documento\n"
-                + "end-edit < URI > fine modifica della sezione del documento\n"
-                + "send < msg > invia un msg sulla chat\n"
-                + "receive visualizza i msg ricevuti sulla chat\n"
+                + "register < username > < password >\tregistra l'utente\n"
+                + "login < username > < password >\teffettua il login\n"
+                + "logout\teffettua il logout\n"
+                + "create < nome documento > < numsezioni >\tcrea un documento\n"
+                + "share < nome documento > < username >\tcondivide il documento\n"
+                + "show < URI >\tmostra l'intero documento o una sezione\n"
+                + "list\tmostra la lista dei documenti\n"
+                + "edit < URI >\tmodifica una sezione del documento\n"
+                + "end-edit < URI >\tfine modifica della sezione del documento\n"
+                + "send < msg >\tinvia un msg sulla chat\n"
+                + "receive\tvisualizza i msg ricevuti sulla chat\n"
+                + "\nUna URI che si riferisce ad una sezione è formata da proprietario/nomeDocumento/numeroSezione\n"
+                + "Una URI che si riferisce ad un documento è formata da proprietario/nomeDocumento"
         );
     }
 
@@ -303,7 +295,7 @@ public class Client {
                 }
             } else if (args.length == 3) {
                 if (args[0].equals("register")) {
-                    RmiRegisterUserClient.registerUser(args[1], args[2]);
+                    RmiRegisterUserClient.registerUser(c.remoteAddress.getCanonicalHostName(), args[1], args[2]);
                 } else if (args[0].equals("login")) {
                     c.login(args[1], args[2]);
                 } else if (args[0].equals("create")) {
@@ -330,8 +322,8 @@ public class Client {
             // test login when user does not exist
             c.login("test1", "testpwd1");
             // test register user
-            RmiRegisterUserClient.registerUser("test1", "testpwd1");
-            RmiRegisterUserClient.registerUser("test2", "testpwd2");
+            RmiRegisterUserClient.registerUser("127.0.0.1", "test1", "testpwd1");
+            RmiRegisterUserClient.registerUser("127.0.0.1", "test2", "testpwd2");
             // test login with wrong password
             c.login("test1", "testpwd2");
             // test correct login

@@ -48,9 +48,4 @@ public class ChatRoomAdressesManager {
     public synchronized void closeChatRoom(InetAddress address) {
         usedAddresses.remove(address);
     }
-
-    public static void main(String args[]) {
-        for (int i = 0; i < 100; i++)
-            System.out.println(getInstance().openChatRoom());
-    }
 }

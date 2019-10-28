@@ -13,6 +13,8 @@ import java.net.Socket;
 
 
 public class ShowDocumentSectionRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     private final long sessionID;
     private final DocumentUri uri;
 

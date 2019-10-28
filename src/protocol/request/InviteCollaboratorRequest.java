@@ -10,6 +10,8 @@ import server.*;
 import java.net.Socket;
 
 public class InviteCollaboratorRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     private final long sessionID;
     private final String docName;
     private final String collaborator;

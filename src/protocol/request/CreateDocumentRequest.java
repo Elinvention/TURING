@@ -12,6 +12,8 @@ import java.net.Socket;
 
 
 public class CreateDocumentRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     public final long sessionID;
     private final String document_name;
     private final int sections;
@@ -26,8 +28,10 @@ public class CreateDocumentRequest extends Request {
     public Response process(Socket client) {
         try {
             User owner = State.getInstance().getUserFromSession(this.sessionID);
-            owner.createDocument(this.document_name, this.sections);
-            owner.processInbox(client);
+            synchronized (owner) {
+                owner.createDocument(this.document_name, this.sections);
+                owner.processInbox(client);
+            }
             return new AckResponse(this);
         } catch (DuplicateDocumentException | InvalidSessionException e) {
             return new ExceptionResponse(e);

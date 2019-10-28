@@ -4,7 +4,6 @@ import exceptions.*;
 import protocol.DocumentUri;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
+
 
 public class State {
     private static State singleton;
@@ -54,33 +54,33 @@ public class State {
         return singleton;
     }
 
-    public User getUser(String username) throws InvalidUsernameException {
+    public synchronized User getUser(String username) throws InvalidUsernameException {
         if (!users.containsKey(username))
             throw new InvalidUsernameException();
         return users.get(username);
     }
 
-    public User getUserOrNull(String username) {
+    public synchronized User getUserOrNull(String username) {
         return users.get(username);
     }
 
-    public Document getDocument(User requester, DocumentUri uri) throws InvalidUsernameException, DocumentNotFoundException, NotAllowedException {
+    public synchronized Document getDocument(User requester, DocumentUri uri) throws InvalidUsernameException, DocumentNotFoundException, NotAllowedException {
         User owner = getUser(uri.owner);
         return owner.getDocument(requester, uri.docName);
     }
 
-    public DocumentSection getDocumentSection(User requester, DocumentUri uri) throws DocumentSectionNotFoundException, InvalidUsernameException, DocumentNotFoundException, NotAllowedException {
+    public synchronized DocumentSection getDocumentSection(User requester, DocumentUri uri) throws DocumentSectionNotFoundException, InvalidUsernameException, DocumentNotFoundException, NotAllowedException {
         Document doc = getDocument(requester, uri);
         return doc.getSection(uri.section);
     }
 
-    public User getUserFromSession(Long sessionID) throws InvalidSessionException {
+    public synchronized User getUserFromSession(Long sessionID) throws InvalidSessionException {
         if (!activeLoginSessions.containsKey(sessionID))
             throw new InvalidSessionException("Session " + sessionID + " is not a valid session. Please login again.");
         return activeLoginSessions.get(sessionID);
     }
 
-    public void registerUser(String username, String password) throws DuplicateUsernameException, InvalidPasswordException, InvalidUsernameException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public synchronized void registerUser(String username, String password) throws DuplicateUsernameException, InvalidPasswordException, InvalidUsernameException, InvalidKeySpecException, NoSuchAlgorithmException {
         User new_user = User.registerUser(username, password);
         if (users.containsKey(username)) {
             System.err.println("User " + new_user.toString() + " already exists.");
@@ -94,7 +94,7 @@ public class State {
         return csrng.nextLong();
     }
 
-    public Long login(User user, String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public synchronized Long login(User user, String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
         user.login(password);
         Long sessionID = generateSessionID();
         synchronized (this.activeLoginSessions) {
@@ -103,7 +103,7 @@ public class State {
         return sessionID;
     }
 
-    public void logout(Long sessionID) throws InvalidRequestException {
+    public synchronized void logout(Long sessionID) throws InvalidRequestException {
         synchronized (this.activeLoginSessions) {
             User loggedIn = this.activeLoginSessions.get(sessionID);
             if (loggedIn == null)

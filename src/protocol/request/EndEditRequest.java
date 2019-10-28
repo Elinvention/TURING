@@ -9,9 +9,12 @@ import server.Document;
 import server.State;
 import server.User;
 
+import java.io.IOException;
 import java.net.Socket;
 
 public class EndEditRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     private final long sessionID;
     private final DocumentUri uri;
     private final String editedText;
@@ -30,7 +33,7 @@ public class EndEditRequest extends Request {
             doc.unlockSection(editor, editedText, this.uri.section);
             editor.processInbox(client);
             return new AckResponse(this);
-        } catch (ProtocolException e) {
+        } catch (ProtocolException | IOException e) {
             return new ExceptionResponse(e);
         }
     }

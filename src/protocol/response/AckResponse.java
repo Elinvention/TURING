@@ -1,8 +1,10 @@
 package protocol.response;
 
+import client.Client;
 import protocol.request.Request;
 
 public class AckResponse extends Response {
+    private static final long serialVersionUID = 1L;
 
     public final Request reqAck;
 
@@ -16,6 +18,11 @@ public class AckResponse extends Response {
 
     @Override
     public String toString() {
-        return "Acknowledgement for request " + reqAck.toString();
+        return "Operazione \"" + this.reqAck.toString() + "\" eseguita con successo.";
+    }
+
+    @Override
+    public void process(Client client) {
+        System.out.println(this.toString());
     }
 }

@@ -1,22 +1,35 @@
 package protocol.response;
 
-import protocol.DocumentUri;
+import client.Client;
+import server.DocumentInfo;
 
 import java.util.List;
 
 public class ListDocumentsResponse extends Response {
-    public final List<DocumentUri> list;
+    private static final long serialVersionUID = 1L;
 
-    public ListDocumentsResponse(List<DocumentUri> list) {
-        this.list = list;
+    public final List<DocumentInfo> infos;
+
+    public ListDocumentsResponse(List<DocumentInfo> infos) {
+        this.infos = infos;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (DocumentUri docUri : list) {
-            sb.append(docUri.toString() + "\n");
+        if (this.infos.size() == 0)
+            sb.append("Non hai documenti. Perché non ne crei uno?");
+        else {
+            sb.append("Documenti a cui si ha accesso:");
+            for (DocumentInfo docInfo : this.infos) {
+                sb.append("\n" + docInfo.toString());
+            }
         }
         return sb.toString();
+    }
+
+    @Override
+    public void process(Client client) {
+        System.out.println(this.toString());
     }
 }

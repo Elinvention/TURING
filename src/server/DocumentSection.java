@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class DocumentSection implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String text = "";
     private User currentEditor;
     private DocumentUri uri;
@@ -30,7 +32,7 @@ public class DocumentSection implements Serializable {
         return this.uri;
     }
 
-    public synchronized void setText(User editor, String text) throws DocumentSectionLockedException, DocumentSectionNotLockedException {
+    public synchronized void setText(User editor, String text) throws DocumentSectionLockedException, DocumentSectionNotLockedException, IOException {
         if (currentEditor == null)
             throw new DocumentSectionNotLockedException();
         if (editor != currentEditor)
@@ -41,7 +43,7 @@ public class DocumentSection implements Serializable {
         this.save();
     }
 
-    public User getCurrentEditor() {
+    public synchronized User getCurrentEditor() {
         return currentEditor;
     }
 
@@ -55,7 +57,7 @@ public class DocumentSection implements Serializable {
                 throw new DocumentSectionLockedException();
     }
 
-    public boolean isLocked() {
+    public synchronized boolean isLocked() {
         return currentEditor != null;
     }
 
@@ -67,19 +69,10 @@ public class DocumentSection implements Serializable {
             return "Section " + uri.section + " is not locked\n" + text;
     }
 
-    public void save() {
+    public synchronized void save() throws IOException {
         Path path = this.uri.getPath();
-        try {
-            Files.createDirectories(path.getParent());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            Files.writeString(path, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            System.out.println("Something went wrong: " + e.getMessage());
-        }
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     public static DocumentSection load(DocumentUri uri) throws IOException {

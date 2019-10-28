@@ -7,11 +7,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DocumentUri implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public final String owner;
     public final String docName;
     public final Integer section;
-
-    private static final long serialVersionUID = 1L;
 
     public DocumentUri(String owner, String docName, Integer section) {
         this.owner = owner;

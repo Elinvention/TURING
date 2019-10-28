@@ -14,6 +14,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 public class EditRequest extends Request {
+    private static final long serialVersionUID = 1L;
+
     public final long sessionID;
     public final DocumentUri uri;
 

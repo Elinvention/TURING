@@ -14,9 +14,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 public class RmiRegisterUserClient {
-    public static void registerUser(String username, String password) {
+    public static void registerUser(String ip, String username, String password) {
         try {
-            Registry rmiRegistry = LocateRegistry.getRegistry("127.0.0.1", Server.RMI_PORT);
+            Registry rmiRegistry = LocateRegistry.getRegistry(ip, Server.RMI_PORT);
             RmiRegisterUser server = (RmiRegisterUser) rmiRegistry.lookup(RmiRegisterUser.registryBindName);
             server.registerUser(username, password);
             System.out.println("New user '" + username + "' successfully registered with password '" + password + "'.");
@@ -29,13 +29,5 @@ public class RmiRegisterUserClient {
         } catch (RemoteException | NotBoundException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String args[]) throws Exception {
-        if (args.length != 2) {
-            System.err.println("Inserire username e password.");
-            return;
-        }
-        registerUser(args[0], args[1]);
     }
 }

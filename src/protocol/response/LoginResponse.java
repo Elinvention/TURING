@@ -1,7 +1,11 @@
 package protocol.response;
 
 
+import client.Client;
+
 public class LoginResponse extends Response {
+    private static final long serialVersionUID = 1L;
+
     public final String username;
     public final Long sessionID;
 
@@ -11,6 +15,12 @@ public class LoginResponse extends Response {
     }
 
     public String toString() {
-        return "User " + username + " successfully logged in. New session: " + sessionID;
+        return "Login eseguito con successo! Nuovo ID sessione: " + sessionID;
+    }
+
+    @Override
+    public void process(Client client) {
+        client.setSessionID(sessionID);
+        System.out.println(this.toString());
     }
 }
