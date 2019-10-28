@@ -5,6 +5,7 @@ import protocol.request.*;
 import protocol.Message;
 import protocol.response.*;
 import server.ChatRoomAdressesManager;
+import server.DocumentSection;
 import server.Server;
 
 import java.io.*;
@@ -138,11 +139,15 @@ public class Client {
         EditRequest req = new EditRequest(sessionID, uri);
         System.out.println(req.toString());
         req.send(socket);
-        receiveResponse();
+        Response response = receiveResponse();
+        if (response instanceof EditResponse) {
+            ((EditResponse) response).section.save();
+        }
     }
 
-    public void endEditDocument(DocumentUri uri, String editedText) throws IOException, ClassNotFoundException {
+    public void endEditDocument(DocumentUri uri) throws IOException, ClassNotFoundException {
         this.loadSessionID();
+        String editedText = DocumentSection.load(uri).getText();
         EndEditRequest req = new EndEditRequest(sessionID, uri, editedText);
         System.out.println(req.toString());
         req.send(socket);
@@ -254,7 +259,7 @@ public class Client {
                 + "show < URI > mostra l'intero documento o una sezione\n"
                 + "list - mostra la lista dei documenti\n"
                 + "edit < URI > modifica una sezione del documento\n"
-                + "end-edit < URI > < testo > fine modifica della sezione del documento\n"
+                + "end-edit < URI > fine modifica della sezione del documento\n"
                 + "send < msg > invia un msg sulla chat\n"
                 + "receive visualizza i msg ricevuti sulla chat\n"
         );
@@ -290,6 +295,8 @@ public class Client {
                     }
                 } else if (args[0].equals("edit")) {
                     c.editDocument(DocumentUri.parse(args[1]));
+                } else if (args[0].equals("end-edit")) {
+                    c.endEditDocument(DocumentUri.parse(args[1]));
                 } else {
                     showUsage();
                     System.exit(-1);
@@ -303,8 +310,6 @@ public class Client {
                     c.createDocument(args[1], Integer.parseInt(args[2]));
                 } else if (args[0].equals("share")) {
                     c.inviteCollaborator(args[1], args[2]);
-                } else if (args[0].equals("end-edit")) {
-                    c.endEditDocument(DocumentUri.parse(args[1]), args[2]);
                 } else {
                     showUsage();
                     System.exit(-1);
@@ -354,7 +359,7 @@ public class Client {
             c.showDocument(new DocumentUri("test1", "troll"));
             c.showDocument(new DocumentUri("troll", "troll"));
             c.showDocument(new DocumentUri("test1", "testdoc"));
-            c.endEditDocument(new DocumentUri("test1", "testdoc", 3), "lol\n");
+            c.endEditDocument(new DocumentUri("test1", "testdoc", 3));
             c.showDocument(new DocumentUri("test1", "testdoc"));
 
             d.login("test2", "testpwd2");
@@ -376,7 +381,7 @@ public class Client {
                 c.editDocument(uri);
                 c.showDocumentSection(uri);
                 d.editDocument(uri);
-                c.endEditDocument(uri, String.valueOf(i) + "\n");
+                c.endEditDocument(uri);
                 c.showDocumentSection(uri);
             }
             c.showDocument(new DocumentUri("test1", "testdoc"));
