@@ -1,8 +1,6 @@
 package server;
 
-import exceptions.DocumentSectionLockedException;
-import exceptions.DocumentSectionNotFoundException;
-import exceptions.DocumentSectionNotLockedException;
+import exceptions.*;
 import protocol.DocumentUri;
 
 import java.io.IOException;
@@ -120,9 +118,12 @@ public class Document implements Serializable {
         collaborator.queueInvite(new Invite(this, collaborator));
     }
 
-    public DocumentSection lockSection(User editor, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException {
+    public DocumentSection lockSection(User editor, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException, UserAlreadyEditingException {
+        if (editor.isEditing())
+            throw new UserAlreadyEditingException("User " + editor.getName() + " is already editing " + editor.editing.getUri());
         DocumentSection documentSection = this.getSection(section);
         documentSection.setCurrentEditor(editor);
+        this.owner.editing = documentSection;
         this.lockedSectionsCounter++;
         return documentSection;
     }
@@ -134,10 +135,11 @@ public class Document implements Serializable {
         return this.chatAddress;
     }
 
-    public void unlockSection(User editor, String editedText, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException, DocumentSectionNotLockedException {
+    public void unlockSection(User editor, String editedText, int section) throws DocumentSectionNotFoundException, DocumentSectionLockedException, DocumentSectionNotLockedException, InvalidRequestException {
         DocumentSection documentSection = this.getSection(section);
         documentSection.setText(editor, editedText);
         documentSection.setCurrentEditor(null);
+        this.owner.editing = null;
         if (this.lockedSectionsCounter > 0)
             this.lockedSectionsCounter--;
         if (this.lockedSectionsCounter == 0) {

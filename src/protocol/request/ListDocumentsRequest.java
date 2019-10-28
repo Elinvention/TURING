@@ -20,6 +20,7 @@ public class ListDocumentsRequest extends Request {
     public Response process(Socket client) {
         try {
             User requester = State.getInstance().getUserFromSession(this.sessionID);
+            requester.processInbox(client);
             return new ListDocumentsResponse(requester.listDocumentUris());
         } catch (InvalidSessionException e) {
             return new ExceptionResponse(e);

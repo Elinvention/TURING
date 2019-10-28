@@ -29,6 +29,7 @@ public class EditRequest extends Request {
             Document doc = State.getInstance().getDocument(requester, uri);
             DocumentSection docSection = doc.lockSection(requester, uri.section);
             InetAddress addr = doc.getChatAddress();
+            requester.processInbox(client);
             return new EditResponse(docSection, addr);
         } catch (ProtocolException e) {
             return new ExceptionResponse(e);

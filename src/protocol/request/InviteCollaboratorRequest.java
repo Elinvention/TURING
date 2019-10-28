@@ -29,10 +29,11 @@ public class InviteCollaboratorRequest extends Request {
                 throw new InvalidRequestException("Cannot share document to owner.");
             Document toShare = requester.getDocument(requester, docName);
             toShare.inviteCollaborator(collaborator);
+            requester.processInbox(client);
+            return new AckResponse(this);
         } catch (ProtocolException e) {
             return new ExceptionResponse(e);
         }
-        return new AckResponse(this);
     }
 
     @Override

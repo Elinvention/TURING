@@ -2,7 +2,6 @@ package protocol.request;
 
 import exceptions.DuplicateDocumentException;
 import exceptions.InvalidSessionException;
-import exceptions.NotAllowedException;
 import protocol.response.AckResponse;
 import protocol.response.ExceptionResponse;
 import protocol.response.Response;
@@ -28,6 +27,7 @@ public class CreateDocumentRequest extends Request {
         try {
             User owner = State.getInstance().getUserFromSession(this.sessionID);
             owner.createDocument(this.document_name, this.sections);
+            owner.processInbox(client);
             return new AckResponse(this);
         } catch (DuplicateDocumentException | InvalidSessionException e) {
             return new ExceptionResponse(e);

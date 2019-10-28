@@ -94,8 +94,8 @@ public class State {
         return csrng.nextLong();
     }
 
-    public Long login(Socket client, User user, String password) throws InvalidRequestException, InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
-        user.login(password, client);
+    public Long login(User user, String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
+        user.login(password);
         Long sessionID = generateSessionID();
         synchronized (this.activeLoginSessions) {
             this.activeLoginSessions.put(sessionID, user);
@@ -109,12 +109,6 @@ public class State {
             if (loggedIn == null)
                 throw new InvalidRequestException();
             activeLoginSessions.remove(sessionID);
-        }
-    }
-
-    public void processInvites(Socket client) {
-        for (User user : this.activeLoginSessions.values()) {
-            user.processInbox(client);
         }
     }
 }

@@ -23,7 +23,7 @@ public class Client {
         InetAddress remoteAddress = null;
         try {
             remoteAddress = InetAddress.getLocalHost();
-            String address = Files.readString(Paths.get("address.txt"));
+            String address = Files.readString(Paths.get("address.txt")).strip();
             remoteAddress = InetAddress.getByName(address);
         } catch (IOException e) {
             e.printStackTrace();
@@ -38,22 +38,55 @@ public class Client {
     }
 
     private void saveSessionID() {
-        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(".turing"));) {
-            dos.writeLong(this.sessionID);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (this.sessionID == null) {
+            try {
+                Files.deleteIfExists(Paths.get(".turing.sessionID"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(".turing.sessionID"));) {
+                dos.writeLong(this.sessionID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void loadSessionID() {
-        try (DataInputStream dis = new DataInputStream(new FileInputStream(".turing"))) {
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(".turing.sessionID"))) {
             this.sessionID = dis.readLong();
+        } catch (FileNotFoundException | EOFException e) {
+            this.sessionID = null;
+        } catch (IOException e) {
+            this.sessionID = null;
+            e.printStackTrace();
+        }
+    }
+
+    private void saveMulticastGroup() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(".turing.multicastGroup"))) {
+            oos.writeObject(this.multicastGroup);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void loadMulticastGroup() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(".turing.multicastGroup"))) {
+            this.multicastGroup = (InetAddress) ois.readObject();
+        } catch (FileNotFoundException e) {
+            this.multicastGroup = null;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            this.multicastGroup = null;
+        }
+    }
+
     public void login(String username, String password) throws IOException, ClassNotFoundException {
+        this.loadSessionID();
+        if (this.sessionID != null)
+            this.logout();
         LoginRequest req = new LoginRequest(username, password);
         System.out.println(req.toString());
         req.send(socket);
@@ -69,7 +102,11 @@ public class Client {
         LogoutRequest req = new LogoutRequest(this.sessionID);
         System.out.println(req.toString());
         req.send(socket);
-        receiveResponse();
+        Response response = receiveResponse();
+        if (response instanceof AckResponse) {
+            this.sessionID = null;
+            this.saveSessionID();
+        }
     }
 
     public void createDocument(String docName, int sections) throws IOException, ClassNotFoundException {
@@ -129,28 +166,35 @@ public class Client {
     }
 
     public void sendChatMessage(String message) {
+        this.loadMulticastGroup();
+        if (this.multicastGroup == null) {
+            System.err.println("You are not editing any document.");
+            return;
+        }
         try (MulticastSocket socket = new MulticastSocket(ChatRoomAdressesManager.PORT)) {
             socket.setTimeToLive(1);
             socket.setLoopbackMode(false);
             socket.setReuseAddress(true);
 
-            while (true) {
-                ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(byteStream);
-                out.writeUTF(message);
-                byte[] data = byteStream.toByteArray();
-                DatagramPacket packet = new DatagramPacket(data, data.length, this.multicastGroup, ChatRoomAdressesManager.PORT);
-                socket.send(packet);
-                System.out.println("Sent message");
-            }
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(byteStream);
+            out.writeUTF(message);
+            byte[] data = byteStream.toByteArray();
+            DatagramPacket packet = new DatagramPacket(data, data.length, this.multicastGroup, ChatRoomAdressesManager.PORT);
+            socket.send(packet);
+            System.out.format("Sent message: \"%s\"\n", message);
         } catch (IOException e) {
+            System.err.println("Some error appeared: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            System.out.println("Multicast server for " + this.multicastGroup + " terminated.");
         }
     }
 
     public void receiveChatMessages() {
+        this.loadMulticastGroup();
+        if (this.multicastGroup == null) {
+            System.err.println("You are not editing any document.");
+            return;
+        }
         try (MulticastSocket client = new MulticastSocket(ChatRoomAdressesManager.PORT);) {
             client.joinGroup(this.multicastGroup);
             DatagramPacket packet = new DatagramPacket(new byte[512], 512);
@@ -160,11 +204,9 @@ public class Client {
                         packet.getData(), packet.getOffset(), packet.getLength()));
                 String message = in.readUTF();
                 System.out.println("Message received: " + message);
-                if (message.equals("finish"))
-                    break;
             }
         } catch (IOException e) {
-            System.out.println("Some error appeared: " + e.getMessage());
+            System.err.println("Some error appeared: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -172,11 +214,12 @@ public class Client {
     public Response receiveResponse() throws IOException, ClassNotFoundException {
         Response response = (Response) Message.receive(socket);
         while (response instanceof InviteNotification) {
-            System.out.println(response);
+            System.out.println("Received " + response);
             response = (Response) Message.receive(socket);
         }
         if (response instanceof EditResponse) {
-            InetAddress addr = ((EditResponse) response).chatAddress;
+            this.multicastGroup = ((EditResponse) response).chatAddress;
+            this.saveMulticastGroup();
         }
         printResponse(response);
         return response;
@@ -222,14 +265,14 @@ public class Client {
         Client c = new Client();
 
         try {
-            if (args.length == 0) {
-                showUsage();
-                System.exit(-1);
-            } else if (args.length == 1) {
+            if (args.length == 1) {
                 if (args[0].equals("logout")) {
                     c.logout();
                 } else if (args[0].equals("receive")) {
                     c.receiveChatMessages();
+                } else {
+                    showUsage();
+                    System.exit(-1);
                 }
             } else if (args.length == 2) {
                 if (args[0].equals("send")) {
@@ -244,6 +287,11 @@ public class Client {
                     } catch (IllegalArgumentException e) {
                         System.err.format("Failed to parse URI \"%s\". Valid URIs have the format owner/document[/section]\n", args[1]);
                     }
+                } else if (args[0].equals("edit")) {
+                    c.editDocument(DocumentUri.parse(args[1]));
+                } else {
+                    showUsage();
+                    System.exit(-1);
                 }
             } else if (args.length == 3) {
                 if (args[0].equals("register")) {
@@ -254,11 +302,15 @@ public class Client {
                     c.createDocument(args[1], Integer.parseInt(args[2]));
                 } else if (args[0].equals("share")) {
                     c.inviteCollaborator(args[1], args[2]);
-                } else if (args[0].equals("edit")) {
-                    c.editDocument(DocumentUri.parse(args[1]));
                 } else if (args[0].equals("end")) {
                     c.endEditDocument(DocumentUri.parse(args[1]), args[2]);
+                } else {
+                    showUsage();
+                    System.exit(-1);
                 }
+            } else {
+                showUsage();
+                System.exit(-1);
             }
         } catch (IOException | ClassNotFoundException | IllegalArgumentException e) {
             e.printStackTrace();

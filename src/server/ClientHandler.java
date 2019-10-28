@@ -49,7 +49,6 @@ public class ClientHandler implements Runnable {
                     System.out.println(request.getClass().getSimpleName() + " received: " + request.toString());
                     Response response = request.process(client);
                     response.send(client);
-                    State.getInstance().processInvites(client);
                 } catch (ClassNotFoundException | InvalidClassException e) {
                     System.err.println("Dropping unknown packet received from " + client.getRemoteSocketAddress().toString() + ".");
                     trySendExceptionResponse(e);

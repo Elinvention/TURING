@@ -28,6 +28,7 @@ public class ShowDocumentRequest extends Request {
         try {
             User requester = State.getInstance().getUserFromSession(this.sessionID);
             Document document = State.getInstance().getDocument(requester, this.uri);
+            requester.processInbox(client);
             return new ShowDocumentResponse(document);
         } catch (ProtocolException e) {
             return new ExceptionResponse(e);

@@ -31,9 +31,10 @@ public class LoginRequest extends Request {
     public Response process(Socket client) {
         try {
             User user = State.getInstance().getUser(this.username);
-            Long sessionID = State.getInstance().login(client, user, password);
+            Long sessionID = State.getInstance().login(user, password);
+            user.processInbox(client);
             return new LoginResponse(username, sessionID);
-        } catch (InvalidUsernameException | InvalidPasswordException | InvalidRequestException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+        } catch (InvalidUsernameException | InvalidPasswordException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             return new ExceptionResponse(e);
         }
     }

@@ -26,6 +26,7 @@ public class User implements Serializable {
     private transient Map<String, Document> documents;
     private transient Set<Document> collaboratingOn;
     private transient Queue<Invite> inviteInbox;
+    public DocumentSection editing;
 
     public User(String name, String hashedPassword) throws InvalidUsernameException, InvalidPasswordException {
         if (name == null || hashedPassword == null) {
@@ -143,13 +144,12 @@ public class User implements Serializable {
         return allDocuments.map(d -> d.uri).collect(Collectors.toList());
     }
 
-    public void login(String password, Socket client) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public void login(String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
         if (!this.checkPassword(password))
             throw new InvalidPasswordException();
-        this.processInbox(client);
     }
 
-    public void processInbox(Socket client) {
+    public synchronized void processInbox(Socket client) {
         while (!inviteInbox.isEmpty()) {
             Invite invite = inviteInbox.remove();
             try {
@@ -181,5 +181,9 @@ public class User implements Serializable {
         if (!doc.isAllowed(requester))
             throw new NotAllowedException();
         return doc;
+    }
+
+    public boolean isEditing() {
+        return this.editing != null;
     }
 }

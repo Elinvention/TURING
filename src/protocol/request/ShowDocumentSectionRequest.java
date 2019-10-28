@@ -26,6 +26,7 @@ public class ShowDocumentSectionRequest extends Request {
         try {
             User requester = State.getInstance().getUserFromSession(this.sessionID);
             DocumentSection docSection = State.getInstance().getDocumentSection(requester, this.uri);
+            requester.processInbox(client);
             return new ShowDocumentSectionResponse(docSection);
         } catch (ProtocolException e) {
             return new ExceptionResponse(e);

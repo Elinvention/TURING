@@ -1,6 +1,7 @@
 package protocol.request;
 
 import exceptions.InvalidRequestException;
+import exceptions.InvalidSessionException;
 import protocol.response.AckResponse;
 import protocol.response.ExceptionResponse;
 import protocol.response.Response;
@@ -19,8 +20,9 @@ public class LogoutRequest extends Request {
     @Override
     public Response process(Socket client) {
         try {
+            State.getInstance().getUserFromSession(sessionID).processInbox(client);
             State.getInstance().logout(sessionID);
-        } catch (InvalidRequestException e) {
+        } catch (InvalidRequestException | InvalidSessionException e) {
             return new ExceptionResponse(e);
         }
         return new AckResponse(this);

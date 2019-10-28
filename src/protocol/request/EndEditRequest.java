@@ -28,6 +28,7 @@ public class EndEditRequest extends Request {
             User editor = State.getInstance().getUserFromSession(this.sessionID);
             Document doc = State.getInstance().getDocument(editor, this.uri);
             doc.unlockSection(editor, editedText, this.uri.section);
+            editor.processInbox(client);
             return new AckResponse(this);
         } catch (ProtocolException e) {
             return new ExceptionResponse(e);
