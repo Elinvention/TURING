@@ -2,7 +2,7 @@ package protocol.request;
 
 import exceptions.*;
 import protocol.DocumentUri;
-import protocol.response.AckResponse;
+import protocol.response.EndEditResponse;
 import protocol.response.ExceptionResponse;
 import protocol.response.Response;
 import server.Document;
@@ -32,7 +32,7 @@ public class EndEditRequest extends Request {
             Document doc = State.getInstance().getDocument(editor, this.uri);
             doc.unlockSection(editor, editedText, this.uri.section);
             editor.processInbox(client);
-            return new AckResponse(this);
+            return new EndEditResponse();
         } catch (ProtocolException | IOException e) {
             return new ExceptionResponse(e);
         }
