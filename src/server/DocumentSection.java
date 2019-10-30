@@ -11,11 +11,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+/*
+ * Sezione di un documento Turing
+ */
 public class DocumentSection implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    // testo della sezione
     private String text = "";
+    // utente che sta bloccando la sezione
     private User currentEditor;
+    // identificatore della sezione
     private DocumentUri uri;
 
     public DocumentSection(DocumentUri uri) {
@@ -32,6 +38,10 @@ public class DocumentSection implements Serializable {
         return this.uri;
     }
 
+    // imposta il testo della sezione e controlla che il richiedente abbia i permessi necessari
+    // Lancia DocumentSectionNotLockedException se la sezione non è stata bloccata prima di essere modificata
+    // Lancia DocumentSectionLockedException se la sezione è già stata bloccata da un'altro utente
+    // Lancia IOException se fallisce il salvataggio su disco della sezione
     public synchronized void setText(User editor, String text) throws DocumentSectionLockedException, DocumentSectionNotLockedException, IOException {
         if (currentEditor == null)
             throw new DocumentSectionNotLockedException();
@@ -47,6 +57,7 @@ public class DocumentSection implements Serializable {
         return currentEditor;
     }
 
+    // Imposta l'editor corrente che blocca quasta sezione
     public synchronized void setCurrentEditor(User currentEditor) throws DocumentSectionLockedException {
         if (this.currentEditor == null)
             this.currentEditor = currentEditor;
@@ -57,6 +68,7 @@ public class DocumentSection implements Serializable {
                 throw new DocumentSectionLockedException();
     }
 
+    // restituisce true se la sezione è bloccata
     public synchronized boolean isLocked() {
         return currentEditor != null;
     }
@@ -69,12 +81,14 @@ public class DocumentSection implements Serializable {
             return "Section " + uri.section + " is not locked\n" + text;
     }
 
+    // Salva su disco la sezione
     public synchronized void save() throws IOException {
         Path path = this.uri.getPath();
         Files.createDirectories(path.getParent());
         Files.writeString(path, text, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
+    // Carica da disco la sezione
     public static DocumentSection load(DocumentUri uri) throws IOException {
         Path path = uri.getPath();
         String text = Files.readString(path, StandardCharsets.UTF_8);
@@ -83,6 +97,7 @@ public class DocumentSection implements Serializable {
         return newSection;
     }
 
+    // Tenta di caricare la sezione da disco, se fallisce ne crea una nuova.
     public static DocumentSection loadOrCreate(DocumentUri uri) {
         try {
             return load(uri);

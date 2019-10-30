@@ -5,6 +5,10 @@ import server.DocumentInfo;
 
 import java.util.List;
 
+/*
+ * Una Response generata dal server a seguito di una ListDocumentRequest.
+ * Produce la lista di documenti posseduti e modificabili dall'utente.
+ */
 public class ListDocumentsResponse extends Response {
     private static final long serialVersionUID = 1L;
 

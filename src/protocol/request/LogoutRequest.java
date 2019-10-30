@@ -10,6 +10,9 @@ import server.State;
 import java.net.Socket;
 
 
+/*
+ * Richiesta di logout
+ */
 public class LogoutRequest extends Request {
     private static final long serialVersionUID = 1L;
 

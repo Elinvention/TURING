@@ -15,10 +15,16 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 
 
+/*
+ * Classe principale del client.
+ */
 public class Client {
+    // Indirizzo remoto del server
     private InetAddress remoteAddress;
     private Socket socket = new Socket();
+    // Indirizzo multicast della chat del documento
     private InetAddress multicastGroup;
+    // ID della sessione
     private Long sessionID;
 
     public Client() {

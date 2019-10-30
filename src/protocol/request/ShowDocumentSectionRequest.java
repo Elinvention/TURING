@@ -12,6 +12,9 @@ import server.User;
 import java.net.Socket;
 
 
+/*
+ * Richiesta di download di una sezione.
+ */
 public class ShowDocumentSectionRequest extends Request {
     private static final long serialVersionUID = 1L;
 

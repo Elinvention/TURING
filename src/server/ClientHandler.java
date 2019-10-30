@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InvalidClassException;
 import java.net.Socket;
 
-
+/*
+ * Un Runnable che viene eseguito su thread paralleli per gestire più client contemporaneamente
+ */
 public class ClientHandler implements Runnable {
     private Socket client;
 

@@ -2,6 +2,9 @@ package protocol.response;
 
 import client.Client;
 
+/*
+ * Risposta ad una richiesta EndEditRequest.
+ */
 public class EndEditResponse extends Response {
     private static final long serialVersionUID = 1L;
 

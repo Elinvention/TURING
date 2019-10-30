@@ -13,6 +13,9 @@ import server.User;
 import java.net.InetAddress;
 import java.net.Socket;
 
+/*
+ * Richiesta di inzio editing.
+ */
 public class EditRequest extends Request {
     private static final long serialVersionUID = 1L;
 

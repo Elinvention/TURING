@@ -5,6 +5,10 @@ import server.Document;
 
 import java.io.IOException;
 
+/*
+ * Response generata a seguito di una ShowDocumentRequest.
+ * Contiene il documento con tutte le sue sezioni.
+ */
 public class ShowDocumentResponse extends Response {
     private static final long serialVersionUID = 1L;
 

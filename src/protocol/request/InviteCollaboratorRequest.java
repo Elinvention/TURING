@@ -9,6 +9,9 @@ import server.*;
 
 import java.net.Socket;
 
+/*
+ * Richiesta di aggiunta collaboratore.
+ */
 public class InviteCollaboratorRequest extends Request {
     private static final long serialVersionUID = 1L;
 

@@ -3,14 +3,15 @@ package protocol.response;
 
 import client.Client;
 
+/*
+ * Una Response generata a seguito di una LoginRequest.
+ */
 public class LoginResponse extends Response {
     private static final long serialVersionUID = 1L;
 
-    public final String username;
     public final Long sessionID;
 
-    public LoginResponse(String username, Long sessionID) {
-        this.username = username;
+    public LoginResponse(Long sessionID) {
         this.sessionID = sessionID;
     }
 

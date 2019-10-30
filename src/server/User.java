@@ -17,17 +17,26 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
+/*
+ * Rappresenta un utente registrato al servizio Turing
+ */
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    // nome dell'utente
     public final String name;
+    // hash della password dell'utente
     public final String hashedPassword;
+    // identifiacatore della sezione bloccata dall'utente
     public DocumentUri editing;
+    // Mappa il nome del documento con il Document corrispondente
     private transient Map<String, Document> documents;
+    // Insieme di documenti su cui l'utente sta collaborando. Va mantenuta la consistenza con Document.collaborators
     private transient Set<Document> collaboratingOn;
+    // Coda di inviti pendenti non ancora notificati all'utente perché non è online
     private transient Queue<Invite> inviteInbox;
 
+    // Costruttore che pone dei controlli di validità della password e del nome utente
     public User(String name, String hashedPassword) throws InvalidUsernameException, InvalidPasswordException {
         if (name == null || hashedPassword == null) {
             throw new NullPointerException();
@@ -45,6 +54,7 @@ public class User implements Serializable {
         this.inviteInbox = new ArrayDeque<>();
     }
 
+    // Registra un nuovo utente sul server creando la struttura di directory corrispondente
     public static User registerUser(String name, String password) throws InvalidPasswordException, InvalidUsernameException, InvalidKeySpecException, NoSuchAlgorithmException {
         String hashedPassword = hashPassword(password);
         User newUser = new User(name, hashedPassword);
@@ -58,6 +68,7 @@ public class User implements Serializable {
         return newUser;
     }
 
+    // Genera il sale, un numero casuale crittograficamente sicuro da utilizzare per creare l'hash della password
     private static byte[] generateSalt() {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[64];
@@ -65,6 +76,10 @@ public class User implements Serializable {
         return salt;
     }
 
+    // genera l'hash della password, una stringa separata da ":", che è composta da:
+    // - numero di iterazioni dell'algoritmo PBKDF2
+    // - sale codificato in Base64
+    // - hash della password e del sale calcolato dal PBKDF2 e codificato in Base64
     private static String hashPassword(String password) throws NoSuchAlgorithmException, InvalidKeySpecException {
         int iterations = 1000;
         char[] chars = password.toCharArray();
@@ -79,6 +94,7 @@ public class User implements Serializable {
         return iterations + ":" + encodedSalt + ":" + encodedHash;
     }
 
+    // Controllo corrispondenza password, mediante confronto dell'hash
     private boolean checkPassword(String originalPassword) throws NoSuchAlgorithmException, InvalidKeySpecException {
         String[] splitted = this.hashedPassword.split(":");
         int iterations = Integer.parseInt(splitted[0]);
@@ -98,6 +114,7 @@ public class User implements Serializable {
         return diff == 0;
     }
 
+    // carica la password e tutti i documenti dell'utente da disco
     public static User load(Path userFolder) throws IOException, InvalidPasswordException, InvalidUsernameException {
         String username = userFolder.getFileName().toString();
         System.out.println("Loading user " + username);
@@ -107,6 +124,7 @@ public class User implements Serializable {
         return user;
     }
 
+    // Carica i documenti dell'utente da disco
     private void loadDocuments(Path userFolder) {
         try {
             Files.list(userFolder).forEach(documentFolder -> {
@@ -135,20 +153,24 @@ public class User implements Serializable {
         return this.name;
     }
 
+    // restituisce la lista dei documenti posseduti dall'utente
     public synchronized List<Document> getOwnedDocuments() {
         return new ArrayList<>(this.documents.values());
     }
 
+    // restituisce la lista di DocumentInfo relativi ai documenti posseduti dall'utente e quelli su cui sta collaborando
     public synchronized List<DocumentInfo> listDocumentInfos() {
         Stream<Document> allDocuments = Stream.concat(this.documents.values().stream(), this.collaboratingOn.stream());
         return allDocuments.map(doc -> doc.getInfo()).collect(Collectors.toList());
     }
 
+    // Controllo password al momento del login
     public void login(String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
         if (!this.checkPassword(password))
             throw new InvalidPasswordException();
     }
 
+    // Svuota la coda di notifiche pendenti inviando ogni invito
     public synchronized void processInbox(Socket client) {
         while (!inviteInbox.isEmpty()) {
             Invite invite = inviteInbox.remove();
@@ -160,11 +182,13 @@ public class User implements Serializable {
         }
     }
 
+    // Accoda un invito e aggiunge il documento all'insieme dei documenti su cui si sta collaborando
     public void queueInvite(Invite invite) {
         this.inviteInbox.add(invite);
         this.collaboratingOn.add(invite.document);
     }
 
+    // Crea un documento controllando che non sia già presente
     public synchronized Document createDocument(String docName, int sections) throws DuplicateDocumentException {
         if (documents.containsKey(docName)) {
             throw new DuplicateDocumentException();
@@ -174,6 +198,8 @@ public class User implements Serializable {
         return doc;
     }
 
+    // Restituisce un Document a partire dal suo nome e dal richiedente. Il richiedente serve per verificare che abbia i
+    // permessi necessari
     public synchronized Document getDocument(User requester, String name) throws DocumentNotFoundException, NotAllowedException {
         if (!documents.containsKey(name))
             throw new DocumentNotFoundException();
@@ -183,6 +209,7 @@ public class User implements Serializable {
         return doc;
     }
 
+    // restituisce true se l'utente sta modificando una sessione
     public synchronized boolean isEditing() {
         return this.editing != null;
     }

@@ -5,6 +5,10 @@ import server.DocumentSection;
 
 import java.io.IOException;
 
+/*
+ * Response generata a seguito di una ShowDocumentSectionRequest.
+ * Contiene solo la sezione richiesta.
+ */
 public class ShowDocumentSectionResponse extends Response {
     private static final long serialVersionUID = 1L;
 

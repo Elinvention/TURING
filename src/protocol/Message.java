@@ -7,6 +7,9 @@ import java.io.Serializable;
 import java.net.Socket;
 
 
+/*
+ * Un messaggio che può essere ricevuto e inviato dal client e dal server
+ */
 public abstract class Message implements Serializable {
     private static final long serialVersionUID = 1L;
 

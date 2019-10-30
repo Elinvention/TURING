@@ -12,6 +12,9 @@ import server.User;
 import java.io.IOException;
 import java.net.Socket;
 
+/*
+ * Richiesta di terminazione editing.
+ */
 public class EndEditRequest extends Request {
     private static final long serialVersionUID = 1L;
 

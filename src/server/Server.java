@@ -13,14 +13,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
+/*
+ * Classe principale del server
+ */
 public class Server {
+    // Porta del server TCP
     public static final int PORT = 2000;
+    // Porta del servizio di registrazione RMI
     public static final int RMI_PORT = 3000;
+    // Numero di threads nel pool.
     public static final int NTHREADS = 16;
 
     private static State state = State.getInstance();
     private static ExecutorService es = Executors.newFixedThreadPool(NTHREADS);
 
+    // avvia server RMI
     public static void startRmiServer() {
         System.out.println("Starting Java RMI registry.");
         try {
@@ -40,6 +47,7 @@ public class Server {
         }
     }
 
+    // loop del server TCP
     public static void serverLoop() {
         try (ServerSocket server = new ServerSocket(PORT)) {
             System.out.println("Server listening on port " + PORT);

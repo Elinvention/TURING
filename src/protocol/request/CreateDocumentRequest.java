@@ -10,7 +10,9 @@ import server.User;
 
 import java.net.Socket;
 
-
+/*
+ * Richiesta di creazione nuovo documento.
+ */
 public class CreateDocumentRequest extends Request {
     private static final long serialVersionUID = 1L;
 

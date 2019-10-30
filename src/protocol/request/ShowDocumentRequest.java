@@ -14,6 +14,9 @@ import server.User;
 
 import java.net.Socket;
 
+/*
+ * Richiesta di download di un intero documento
+ */
 public class ShowDocumentRequest extends Request {
     private static final long serialVersionUID = 1L;
 

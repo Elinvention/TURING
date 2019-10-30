@@ -6,6 +6,10 @@ import server.DocumentSection;
 import java.io.IOException;
 import java.net.InetAddress;
 
+/*
+ * Risposta ad una richiesta EditRequest. Contiene la sezione da modificare e l'indirizzo di chat
+ * assegnato al documento.
+ */
 public class EditResponse extends Response {
     private static final long serialVersionUID = 1L;
 

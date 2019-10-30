@@ -5,6 +5,9 @@ import protocol.response.InviteNotification;
 import java.io.IOException;
 import java.net.Socket;
 
+/*
+ * Rappresenta un invito pendente che non è ancora stato notificato all'utente
+ */
 public class Invite {
     public final Document document;
     public final User invitedUser;

@@ -3,6 +3,9 @@ package protocol.response;
 import client.Client;
 import protocol.DocumentUri;
 
+/*
+ * Response che notifica l'utente della ricezione di un invito di collaborazione ad un altro documento.
+ */
 public class InviteNotification extends Response {
     private static final long serialVersionUID = 1L;
 

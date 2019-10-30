@@ -5,6 +5,9 @@ import protocol.DocumentUri;
 import java.io.Serializable;
 import java.util.Set;
 
+/*
+ * Contiene le informazioni necessarie a mostrare la lista dei documenti all'utente
+ */
 public class DocumentInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 

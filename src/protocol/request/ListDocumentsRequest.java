@@ -11,6 +11,9 @@ import server.User;
 import java.net.Socket;
 import java.util.List;
 
+/*
+ * Richiesta di elencazione dei documenti posseduti e modificabili dall'utente.
+ */
 public class ListDocumentsRequest extends Request {
     private static final long serialVersionUID = 1L;
 

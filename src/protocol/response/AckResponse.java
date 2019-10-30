@@ -3,6 +3,9 @@ package protocol.response;
 import client.Client;
 import protocol.request.Request;
 
+/*
+ * Risposta generica. L'operazione precedente è andata a buon fine.
+ */
 public class AckResponse extends Response {
     private static final long serialVersionUID = 1L;
 

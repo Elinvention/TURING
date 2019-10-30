@@ -35,7 +35,7 @@ public class LoginRequest extends Request {
             User user = State.getInstance().getUser(this.username);
             Long sessionID = State.getInstance().login(user, password);
             user.processInbox(client);
-            return new LoginResponse(username, sessionID);
+            return new LoginResponse(sessionID);
         } catch (InvalidUsernameException | InvalidPasswordException | InvalidKeySpecException | NoSuchAlgorithmException e) {
             return new ExceptionResponse(e);
         }
