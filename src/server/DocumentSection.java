@@ -2,6 +2,7 @@ package server;
 
 import exceptions.DocumentSectionLockedException;
 import exceptions.DocumentSectionNotLockedException;
+import exceptions.GenericServerErrorException;
 import protocol.DocumentUri;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class DocumentSection implements Serializable {
     // Lancia DocumentSectionNotLockedException se la sezione non è stata bloccata prima di essere modificata
     // Lancia DocumentSectionLockedException se la sezione è già stata bloccata da un'altro utente
     // Lancia IOException se fallisce il salvataggio su disco della sezione
-    public synchronized void setText(User editor, String text) throws DocumentSectionLockedException, DocumentSectionNotLockedException, IOException {
+    public synchronized void setText(User editor, String text) throws DocumentSectionLockedException, DocumentSectionNotLockedException, GenericServerErrorException {
         if (currentEditor == null)
             throw new DocumentSectionNotLockedException();
         if (editor != currentEditor)
@@ -50,7 +51,11 @@ public class DocumentSection implements Serializable {
         if (text == null)
             throw new NullPointerException();
         this.text = text;
-        this.save();
+        try {
+            this.save();
+        } catch (IOException e) {
+            throw new GenericServerErrorException(e.getMessage());
+        }
     }
 
     public synchronized User getCurrentEditor() {

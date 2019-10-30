@@ -3,9 +3,10 @@ package protocol.request;
 import exceptions.InvalidRequestException;
 import exceptions.ProtocolException;
 import protocol.response.AckResponse;
-import protocol.response.ExceptionResponse;
 import protocol.response.Response;
-import server.*;
+import server.Document;
+import server.State;
+import server.User;
 
 import java.net.Socket;
 
@@ -26,19 +27,15 @@ public class InviteCollaboratorRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User requester = State.getInstance().getUserFromSession(sessionID);
-            User collaborator = State.getInstance().getUser(this.collaborator);
-            if (collaborator == requester)
-                throw new InvalidRequestException("Cannot share document to owner.");
-            Document toShare = requester.getDocument(requester, docName);
-            toShare.inviteCollaborator(collaborator);
-            requester.processInbox(client);
-            return new AckResponse(this);
-        } catch (ProtocolException e) {
-            return new ExceptionResponse(e);
-        }
+    public Response process(Socket client) throws ProtocolException {
+        User requester = State.getInstance().getUserFromSession(sessionID);
+        User collaborator = State.getInstance().getUser(this.collaborator);
+        if (collaborator == requester)
+            throw new InvalidRequestException("Cannot share document to owner.");
+        Document toShare = requester.getDocument(requester, docName);
+        toShare.inviteCollaborator(collaborator);
+        requester.processInbox(client);
+        return new AckResponse(this);
     }
 
     @Override

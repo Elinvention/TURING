@@ -2,7 +2,6 @@ package protocol.request;
 
 import exceptions.ProtocolException;
 import protocol.DocumentUri;
-import protocol.response.ExceptionResponse;
 import protocol.response.Response;
 import protocol.response.ShowDocumentSectionResponse;
 import server.DocumentSection;
@@ -27,15 +26,11 @@ public class ShowDocumentSectionRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User requester = State.getInstance().getUserFromSession(this.sessionID);
-            DocumentSection docSection = State.getInstance().getDocumentSection(requester, this.uri);
-            requester.processInbox(client);
-            return new ShowDocumentSectionResponse(docSection);
-        } catch (ProtocolException e) {
-            return new ExceptionResponse(e);
-        }
+    public Response process(Socket client) throws ProtocolException {
+        User requester = State.getInstance().getUserFromSession(this.sessionID);
+        DocumentSection docSection = State.getInstance().getDocumentSection(requester, this.uri);
+        requester.processInbox(client);
+        return new ShowDocumentSectionResponse(docSection);
     }
 
     @Override

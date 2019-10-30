@@ -1,9 +1,7 @@
 package protocol.request;
 
-import exceptions.DuplicateDocumentException;
-import exceptions.InvalidSessionException;
+import exceptions.ProtocolException;
 import protocol.response.AckResponse;
-import protocol.response.ExceptionResponse;
 import protocol.response.Response;
 import server.State;
 import server.User;
@@ -27,17 +25,13 @@ public class CreateDocumentRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User owner = State.getInstance().getUserFromSession(this.sessionID);
-            synchronized (owner) {
-                owner.createDocument(this.document_name, this.sections);
-                owner.processInbox(client);
-            }
-            return new AckResponse(this);
-        } catch (DuplicateDocumentException | InvalidSessionException e) {
-            return new ExceptionResponse(e);
+    public Response process(Socket client) throws ProtocolException {
+        User owner = State.getInstance().getUserFromSession(this.sessionID);
+        synchronized (owner) {
+            owner.createDocument(this.document_name, this.sections);
+            owner.processInbox(client);
         }
+        return new AckResponse(this);
     }
 
     @Override

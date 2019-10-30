@@ -1,11 +1,7 @@
 package protocol.request;
 
-import exceptions.DocumentNotFoundException;
-import exceptions.InvalidUsernameException;
-import exceptions.NotAllowedException;
 import exceptions.ProtocolException;
 import protocol.DocumentUri;
-import protocol.response.ExceptionResponse;
 import protocol.response.Response;
 import protocol.response.ShowDocumentResponse;
 import server.Document;
@@ -29,15 +25,11 @@ public class ShowDocumentRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User requester = State.getInstance().getUserFromSession(this.sessionID);
-            Document document = State.getInstance().getDocument(requester, this.uri);
-            requester.processInbox(client);
-            return new ShowDocumentResponse(document);
-        } catch (ProtocolException e) {
-            return new ExceptionResponse(e);
-        }
+    public Response process(Socket client) throws ProtocolException {
+        User requester = State.getInstance().getUserFromSession(this.sessionID);
+        Document document = State.getInstance().getDocument(requester, this.uri);
+        requester.processInbox(client);
+        return new ShowDocumentResponse(document);
     }
 
     @Override

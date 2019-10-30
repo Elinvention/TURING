@@ -1,15 +1,13 @@
 package protocol.request;
 
-import exceptions.*;
+import exceptions.ProtocolException;
 import protocol.DocumentUri;
 import protocol.response.EndEditResponse;
-import protocol.response.ExceptionResponse;
 import protocol.response.Response;
 import server.Document;
 import server.State;
 import server.User;
 
-import java.io.IOException;
 import java.net.Socket;
 
 /*
@@ -29,16 +27,12 @@ public class EndEditRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User editor = State.getInstance().getUserFromSession(this.sessionID);
-            Document doc = State.getInstance().getDocument(editor, this.uri);
-            doc.unlockSection(editor, editedText, this.uri.section);
-            editor.processInbox(client);
-            return new EndEditResponse();
-        } catch (ProtocolException | IOException e) {
-            return new ExceptionResponse(e);
-        }
+    public Response process(Socket client) throws ProtocolException {
+        User editor = State.getInstance().getUserFromSession(this.sessionID);
+        Document doc = State.getInstance().getDocument(editor, this.uri);
+        doc.unlockSection(editor, editedText, this.uri.section);
+        editor.processInbox(client);
+        return new EndEditResponse();
     }
 
     @Override

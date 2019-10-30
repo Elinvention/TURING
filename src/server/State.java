@@ -10,7 +10,8 @@ import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /*
@@ -128,8 +129,7 @@ public class State {
     // Fallisce in caso la password non sia valida lanciando un InvalidPasswordException
     // InvalidKeySpecException e NoSuchAlgorithmException vengono lanciate dal codice che controlla la password e
     // dipendono dalla corrente implementazione della JVM
-    public synchronized Long login(User user, String password) throws InvalidPasswordException,
-            InvalidKeySpecException, NoSuchAlgorithmException {
+    public synchronized Long login(User user, String password) throws InvalidPasswordException, GenericServerErrorException {
         user.login(password);
         Long sessionID = generateSessionID();
         synchronized (this.activeLoginSessions) {

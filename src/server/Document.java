@@ -165,7 +165,7 @@ public class Document implements Serializable {
     // Sblocca la sezione specificata dopo averne modificato il testo. Se tutte le sezioni di questo documento vengono
     // sbloccate, rilascia l'idirizzo assegnato
     public synchronized void unlockSection(User editor, String editedText, int section) throws DocumentSectionNotFoundException,
-            DocumentSectionLockedException, DocumentSectionNotLockedException, IOException {
+            DocumentSectionLockedException, DocumentSectionNotLockedException, GenericServerErrorException {
         DocumentSection documentSection = this.getSection(section);
         documentSection.setText(editor, editedText);
         documentSection.setCurrentEditor(null);

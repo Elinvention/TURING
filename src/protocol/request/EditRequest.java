@@ -1,9 +1,8 @@
 package protocol.request;
 
-import exceptions.*;
+import exceptions.ProtocolException;
 import protocol.DocumentUri;
 import protocol.response.EditResponse;
-import protocol.response.ExceptionResponse;
 import protocol.response.Response;
 import server.Document;
 import server.DocumentSection;
@@ -28,17 +27,13 @@ public class EditRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User requester = State.getInstance().getUserFromSession(this.sessionID);
-            Document doc = State.getInstance().getDocument(requester, uri);
-            DocumentSection docSection = doc.lockSection(requester, uri.section);
-            InetAddress addr = doc.getChatAddress();
-            requester.processInbox(client);
-            return new EditResponse(docSection, addr);
-        } catch (ProtocolException e) {
-            return new ExceptionResponse(e);
-        }
+    public Response process(Socket client) throws ProtocolException {
+        User requester = State.getInstance().getUserFromSession(this.sessionID);
+        Document doc = State.getInstance().getDocument(requester, uri);
+        DocumentSection docSection = doc.lockSection(requester, uri.section);
+        InetAddress addr = doc.getChatAddress();
+        requester.processInbox(client);
+        return new EditResponse(docSection, addr);
     }
 
     @Override

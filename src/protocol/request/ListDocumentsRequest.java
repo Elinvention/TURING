@@ -1,7 +1,6 @@
 package protocol.request;
 
-import exceptions.InvalidSessionException;
-import protocol.response.ExceptionResponse;
+import exceptions.ProtocolException;
 import protocol.response.ListDocumentsResponse;
 import protocol.response.Response;
 import server.DocumentInfo;
@@ -24,15 +23,11 @@ public class ListDocumentsRequest extends Request {
     }
 
     @Override
-    public Response process(Socket client) {
-        try {
-            User requester = State.getInstance().getUserFromSession(this.sessionID);
-            List<DocumentInfo> infos = requester.listDocumentInfos();
-            requester.processInbox(client);
-            return new ListDocumentsResponse(infos);
-        } catch (InvalidSessionException e) {
-            return new ExceptionResponse(e);
-        }
+    public Response process(Socket client) throws ProtocolException {
+        User requester = State.getInstance().getUserFromSession(this.sessionID);
+        List<DocumentInfo> infos = requester.listDocumentInfos();
+        requester.processInbox(client);
+        return new ListDocumentsResponse(infos);
     }
 
     @Override

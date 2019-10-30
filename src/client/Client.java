@@ -1,9 +1,10 @@
 package client;
 
 import protocol.DocumentUri;
-import protocol.request.*;
 import protocol.Message;
-import protocol.response.*;
+import protocol.request.*;
+import protocol.response.InviteNotification;
+import protocol.response.Response;
 import server.ChatRoomAdressesManager;
 import server.DocumentSection;
 import server.Server;
@@ -263,7 +264,7 @@ public class Client {
         );
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Client c = new Client();
 
         try {

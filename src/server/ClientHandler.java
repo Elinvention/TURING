@@ -1,5 +1,6 @@
 package server;
 
+import exceptions.ProtocolException;
 import protocol.Message;
 import protocol.request.Request;
 import protocol.response.ExceptionResponse;
@@ -54,6 +55,9 @@ public class ClientHandler implements Runnable {
                 } catch (ClassNotFoundException | InvalidClassException e) {
                     System.err.println("Dropping unknown packet received from " + client.getRemoteSocketAddress().toString() + ".");
                     trySendExceptionResponse(e);
+                } catch (ProtocolException e) {
+                    ExceptionResponse response = new ExceptionResponse(e);
+                    response.send(client);
                 }
             }
         } catch (EOFException e) {

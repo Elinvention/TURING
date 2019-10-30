@@ -165,9 +165,13 @@ public class User implements Serializable {
     }
 
     // Controllo password al momento del login
-    public void login(String password) throws InvalidPasswordException, InvalidKeySpecException, NoSuchAlgorithmException {
-        if (!this.checkPassword(password))
-            throw new InvalidPasswordException();
+    public void login(String password) throws InvalidPasswordException, GenericServerErrorException {
+        try {
+            if (!this.checkPassword(password))
+                throw new InvalidPasswordException();
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new GenericServerErrorException(e.getMessage());
+        }
     }
 
     // Svuota la coda di notifiche pendenti inviando ogni invito
